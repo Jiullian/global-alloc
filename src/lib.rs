@@ -82,4 +82,14 @@ unsafe impl Sync for AllocateurListeLibre{
         }
         core::ptr::null_mut()
     }
+
+    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout){
+        // head : pointeur qui nous permettra de modifier la liste des blocs libres
+        let head = self.head.get();
+        // block : pointeur vers le bloc de mémoire à désallouer, on va ensuite définir size et next pour le retransformer en bloc libre
+        let block = ptr as *mut BlocLibre;
+        (*block).size = layout.size();
+        (*block).next = (*head).take();
+        (*head) = Some(block);
+    }
 }
