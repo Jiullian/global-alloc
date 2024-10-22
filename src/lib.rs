@@ -93,3 +93,25 @@ unsafe impl Sync for AllocateurListeLibre{
         (*head) = Some(block);
     }
 }
+
+// Implémentation de Sync pour l'allocateur
+unsafe impl Send for AllocateurListeLibre{}
+
+// Initialisation de la HEAP, étant donné qu'on est en no_std il faut la définir
+const HEAP_SIZE: usize = 1024 * 1024; // = 1 Mo
+static mut HEAP: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
+
+// Déclaratioon de l'allocateur global
+#[global_allocator]
+static ALLOCATEUR: AllocateurListeLibre = AllocateurListeLibre::new();
+
+// Fonction d'initialisation de l'allocateur
+pub unsafe fn initalisation_allocateur(){
+    ALLOCATEUR.initialisation(HEAP.as_ptr() as usize, HEAP_SIZE);
+}
+
+// Gestionnaire d'erreur d'allocation
+#[alloc_error_handler]
+fn alloc_error(layout: Layout) -> ! {
+    panic!("ERREUR ALLOCATION: {:?}", layout);
+}
