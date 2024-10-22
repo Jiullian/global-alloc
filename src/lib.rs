@@ -43,15 +43,35 @@ impl AllocateurListeLibre{
         self.ajout_region_libre(heap_start, heap_size);
     }
 
+    //ajout_region_libre prend 3 paramètres :
+    //      - &self : référence à l'instance de l'allocateur
+    //      - addr : adresse de départ de la nouvelle région mémoire libre à ajouter
+    //      - size : taille de la nouvelle région en question
+
     unsafe fn ajout_region_libre(&self, addr: usize, size: usize){
         // Alignement de l'adresse et de la taille
+        // align : calcule l'alignement recquis pour un BlocLibre
         let align = mem::align_of::<BlocLibre>();
+        // aligned_addr : calcule l'adresse alignée suivante en respectant l'alignement requis
+        // Supposons que :
+        //      - addr = 1003
+        //      - align = 8
+        // 1003 + 8 - 1 = 1010
+        // !(8 - 1) = !7 = 0xFFFFFFF8
+        // 1010 & 0xFFFFFFF8 = 1008
         let aligned_addr = (addr + align - 1) & !(align - 1);
+        // size : ajustement de la taille
+        // Continuons notre exemple :
+        //      - size = 500 octets
+        // (1008 - 1003) = 5 octets
+        // 500 - 5 = 495 octets
         let size = size - (aligned_addr - align);
 
+        // Vérification de la taille minimale
         if size < mem::size_of::<BlocLibre>(){
             return;
         }
+
 
         let block = aligned_addr as *mut BlocLibre;
         (*block).size = size;
