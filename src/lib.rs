@@ -37,6 +37,27 @@ impl AllocateurListeLibre{
             head: UnsafeCell::new(None),
         }
     }
+
+    // Initialisation d'une région mémoire libre
+    pub unsafe fn initialisation(&self, heap_start: usize, heap_size: usize){
+        self.ajout_region_libre(heap_start, heap_size);
+    }
+
+    unsafe fn ajout_region_libre(&self, addr: usize, size: usize){
+        // Alignement de l'adresse et de la taille
+        let align = mem::align_of::<BlocLibre>();
+        let aligned_addr = (addr + align - 1) & !(align - 1);
+        let size = size - (aligned_addr - align);
+
+        if size < mem::size_of::<BlocLibre>(){
+            return;
+        }
+
+        let block = aligned_addr as *mut BlocLibre;
+        (*block).size = size;
+        (*block).next = (*self.head.get()).take();
+        (*self.head.get()) = Some(block);
+    }
 }
 
 // Implémentation du trait GlobalAlloc pour l'allocateur à liste libre
@@ -61,6 +82,11 @@ unsafe impl Sync for AllocateurListeLibre{
     // Deuxième BLoc 128 > 100      On retire le bloc de la liste, et on retourne le pointeur vers ce bloc
     // Liste des blocs libres mise à jour :
     // head -> BlocLibre(size=64, next) -> BlocLibre(size=256, None)
+
+    // Dealloc est beaucoup plus simple à comprendre
+    // La fonction va simplement récupérer le bloc en question
+    // puis faire des modifications afin qu'il soit
+    // de nouveau considérer comme un bloc libre
 
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         // current : sert de pointeur pour traverse la liste des blocs libres
