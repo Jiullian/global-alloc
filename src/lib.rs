@@ -65,7 +65,7 @@ impl AllocateurListeLibre{
         //      - size = 500 octets
         // (1008 - 1003) = 5 octets
         // 500 - 5 = 495 octets
-        let size = size - (aligned_addr - align);
+        let size = size - (aligned_addr - addr);
 
         // Vérification de la taille minimale
         if size < mem::size_of::<BlocLibre>(){
@@ -152,7 +152,18 @@ unsafe impl GlobalAlloc for AllocateurListeLibre{
 unsafe impl Sync for AllocateurListeLibre{}
 
 // Initialisation de la HEAP, étant donné qu'on est en no_std il faut la définir
+#[cfg(feature = "heap1")]
 const HEAP_SIZE: usize = 1024 * 1024; // = 1 Mo
+
+#[cfg(feature = "heap2")]
+const HEAP_SIZE: usize = 2 * 1024 * 1024; // 2 MB
+
+#[cfg(feature = "heap3")]
+const HEAP_SIZE: usize = 4 * 1024 * 1024; // 4 MB
+
+#[cfg(not(any(feature = "heap1", feature = "heap2", feature = "heap3")))]
+const HEAP_SIZE: usize = 1024 * 1024; // Default to 1 MB
+
 static mut HEAP: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
 
 // Déclaratioon de l'allocateur global
@@ -162,6 +173,12 @@ static ALLOCATEUR: AllocateurListeLibre = AllocateurListeLibre::new();
 // Fonction d'initialisation de l'allocateur
 pub unsafe fn initalisation_allocateur(){
     ALLOCATEUR.initialisation(HEAP.as_ptr() as usize, HEAP_SIZE);
+}
+
+#[no_mangle]
+pub extern "C" fn _start() -> ! {
+    test();
+    loop {}
 }
 
 // Fonction de test

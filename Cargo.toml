@@ -10,3 +10,9 @@ panic = "abort"
 
 [profile.release]
 panic = "abort"
+
+[features]
+default = []
+heap1 = []
+heap2 = []
+heap3 = []
