@@ -177,12 +177,6 @@ pub unsafe fn initalisation_allocateur(){
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    test();
-    loop {}
-}
-
-// Fonction de test
-pub fn test(){
     unsafe {initalisation_allocateur()};
     let mut vec = Vec::new();
     for i in 0..100{
@@ -193,6 +187,7 @@ pub fn test(){
     for(i, &val) in vec.iter().enumerate(){
         assert_eq!(i, val);
     }
+    loop {}
 }
 
 // Gestionnaire d'erreur d'allocation
