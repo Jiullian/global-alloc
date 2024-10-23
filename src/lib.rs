@@ -72,16 +72,24 @@ impl AllocateurListeLibre{
             return;
         }
 
-
+        // Convertit l'adresse alignée en un pointeur vers un bloc libre
         let block = aligned_addr as *mut BlocLibre;
+        // Initialisation d'un nouveau bloc libre
         (*block).size = size;
         (*block).next = (*self.head.get()).take();
+        // Mise à jour de la liste libre
         (*self.head.get()) = Some(block);
     }
+
+    // Voici un exemple plus visuel de la fonction
+    // Avant l'ajout :
+    // self.head -> [BlocLibre A] -> [BlocLibre B] -> None
+    // Après l'ajout :
+    // self.head -> [Nouveau Bloc] -> [BlocLibre A] -> [BlocLibre B] -> None
 }
 
 // Implémentation du trait GlobalAlloc pour l'allocateur à liste libre
-unsafe impl Sync for AllocateurListeLibre{
+unsafe impl GlobalAlloc for AllocateurListeLibre{
     // Dans un allocateur nous avons besoin de 2 méthodes :
     // - Alloc
     // Alloc prend 2 paramètres :
@@ -141,7 +149,7 @@ unsafe impl Sync for AllocateurListeLibre{
 }
 
 // Implémentation de Sync pour l'allocateur
-unsafe impl Send for AllocateurListeLibre{}
+unsafe impl Sync for AllocateurListeLibre{}
 
 // Initialisation de la HEAP, étant donné qu'on est en no_std il faut la définir
 const HEAP_SIZE: usize = 1024 * 1024; // = 1 Mo
@@ -154,6 +162,20 @@ static ALLOCATEUR: AllocateurListeLibre = AllocateurListeLibre::new();
 // Fonction d'initialisation de l'allocateur
 pub unsafe fn initalisation_allocateur(){
     ALLOCATEUR.initialisation(HEAP.as_ptr() as usize, HEAP_SIZE);
+}
+
+// Fonction de test
+pub fn test(){
+    unsafe {initalisation_allocateur()};
+    let mut vec = Vec::new();
+    for i in 0..100{
+        vec.push(i);
+    }
+
+    // Vérifier que les valeurs sont correctes
+    for(i, &val) in vec.iter().enumerate(){
+        assert_eq!(i, val);
+    }
 }
 
 // Gestionnaire d'erreur d'allocation
